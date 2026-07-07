@@ -1,0 +1,270 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Organization {
+  id: String!
+  name: String!
+  slug: String
+  address: String
+  phone: String
+  email: String
+  ruc: String
+  website: String
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: String
+  updatedBy: String
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Role {
+  id: String!
+  name: String!
+  slug: String!
+  description: String
+  canRead: Boolean!
+  canCreate: Boolean!
+  canUpdate: Boolean!
+  canDelete: Boolean!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: String
+  updatedBy: String
+}
+
+type User {
+  id: String!
+  email: String!
+  password: String!
+  firstName: String!
+  lastName: String!
+  isActive: Boolean!
+  organizationId: String!
+  roleId: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: String
+  updatedBy: String
+  role: Role!
+  organization: Organization!
+}
+
+type ContextOrganization {
+  id: String!
+  name: String!
+}
+
+type ContextMenu {
+  id: String!
+  name: String!
+  code: String!
+  path: String!
+  type: String!
+  position: String!
+  order: Int!
+  icon: String
+  description: String
+  subMenu: [ContextMenu!]
+}
+
+type ContextRole {
+  id: String!
+  name: String!
+  slug: String!
+  canCreate: Boolean!
+  canRead: Boolean!
+  canUpdate: Boolean!
+  canDelete: Boolean!
+}
+
+type ContextUser {
+  id: String!
+  email: String!
+  firstName: String!
+  lastName: String!
+  isActive: Boolean!
+  organization: ContextOrganization!
+  role: ContextRole!
+  menus: [ContextMenu!]!
+}
+
+type AuthResponse {
+  token: String!
+}
+
+type Menu {
+  id: String!
+  code: String!
+  name: String!
+  type: String!
+  position: String!
+  description: String
+  path: String
+  icon: String
+  order: Int
+  parentId: String
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdBy: String
+  updatedBy: String
+  subMenu: [SubMenu]
+}
+
+type SubMenu {
+  id: String!
+  code: String!
+  name: String!
+  type: String!
+  position: String!
+  description: String
+  path: String
+  icon: String
+  order: Int
+  parentId: String
+  isActive: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+  createdBy: String
+  updatedBy: String
+  subMenu: [SubMenu]
+}
+
+type Query {
+  userFindAll: [User!]!
+  userById(id: String!): User!
+  authValidateToken: String!
+  authUserInfo: ContextUser!
+  organizationFindAll: [Organization!]!
+  organizationFindOne(id: String!): Organization!
+  menuFindAll: [Menu!]!
+  menuFindById(id: String!): Menu!
+  roleFindAll: [Role!]!
+  roleFindOne(id: String!): Role!
+}
+
+type Mutation {
+  userCreate(createUserInput: CreateUserInput!): Boolean!
+  userUpdate(updateUserInput: UpdateUserInput!): Boolean!
+  userRemove(id: String!): Boolean!
+  authLogin(loginInput: LoginInput!): AuthResponse!
+  authChangePassword(changePasswordInput: ChangePasswordInput!): Boolean!
+  organizationCreate(createOrganizationInput: CreateOrganizationInput!): Boolean!
+  organizationUpdate(updateOrganizationInput: UpdateOrganizationInput!): Boolean!
+  organizationRemove(id: String!): Boolean!
+  menuCreate(createMenuInput: CreateMenuInput!): Boolean!
+  menuUpdate(updateMenuInput: UpdateMenuInput!): Boolean!
+  menuRemove(id: String!): Boolean!
+  roleCreate(createRoleInput: CreateRoleInput!): Boolean!
+  roleUpdate(updateRoleInput: UpdateRoleInput!): Boolean!
+  roleRemove(id: String!): Boolean!
+  roleAssignMenus(assignMenuInput: AssignMenuInput!): Boolean!
+}
+
+input CreateUserInput {
+  email: String!
+  password: String!
+  firstName: String!
+  lastName: String!
+  organizationId: String!
+  roleId: String!
+}
+
+input UpdateUserInput {
+  email: String
+  password: String
+  firstName: String
+  lastName: String
+  organizationId: String
+  roleId: String
+  id: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}
+
+input CreateOrganizationInput {
+  name: String!
+  slug: String!
+  address: String
+  phone: String
+  email: String
+  ruc: String
+  website: String
+}
+
+input UpdateOrganizationInput {
+  name: String
+  slug: String
+  address: String
+  phone: String
+  email: String
+  ruc: String
+  website: String
+  id: String!
+}
+
+input CreateMenuInput {
+  code: String!
+  name: String!
+  path: String!
+  type: String!
+  position: String!
+  description: String
+  icon: String
+  order: Int
+  parentId: String
+}
+
+input UpdateMenuInput {
+  code: String
+  name: String
+  path: String
+  type: String
+  position: String
+  description: String
+  icon: String
+  order: Int
+  parentId: String
+  id: String!
+}
+
+input CreateRoleInput {
+  name: String!
+  slug: String!
+  description: String
+  canRead: Boolean!
+  canCreate: Boolean!
+  canUpdate: Boolean!
+  canDelete: Boolean!
+}
+
+input UpdateRoleInput {
+  name: String
+  slug: String
+  description: String
+  canRead: Boolean
+  canCreate: Boolean
+  canUpdate: Boolean
+  canDelete: Boolean
+  id: String!
+}
+
+input AssignMenuInput {
+  roleId: String!
+  menuIds: [String!]!
+}
