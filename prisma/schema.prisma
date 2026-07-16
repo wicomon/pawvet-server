@@ -35,21 +35,21 @@ model Organization {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String // Hash del password (bcrypt)
-  firstName String
-  lastName  String
-  isActive  Boolean  @default(true)
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String // Hash del password (bcrypt)
+  firstName      String
+  lastName       String
+  isActive       Boolean  @default(true)
   organizationId String
-  roleId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String?
-  updatedBy String?
+  roleId         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String?
+  updatedBy      String?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   appointments   Appointment[]   @relation("AppointmentVet")
   medicalRecords MedicalRecord[] @relation("MedicalRecordVet")
@@ -76,7 +76,7 @@ model Role {
 
   // organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   users User[]
-  menus  RoleMenu[]
+  menus RoleMenu[]
   // rolePermissions RolePermission[]
 
   @@unique([name]) // Un rol único por nombre dentro de cada organización
@@ -90,7 +90,7 @@ model Menu {
   type        String   @default("link") // Tipo de menú: "link", "dropdown"
   position    String   @default("top") // Posición: "sidebar", "topbar"
   description String?
-  path        String   // Ruta en el frontend: "/cursos", "/calificaciones"
+  path        String // Ruta en el frontend: "/cursos", "/calificaciones"
   icon        String? // Nombre del ícono (ej: "book-open", "graduation-cap")
   order       Int      @default(0) // Orden por defecto
   parentId    String? // Para menús anidados (submenús)
@@ -108,14 +108,14 @@ model Menu {
 }
 
 model RoleMenu {
-  id          String   @id @default(uuid())
-  roleId      String
-  menuId      String
-  isActive    Boolean  @default(true) 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  updatedBy   String?
+  id        String   @id @default(uuid())
+  roleId    String
+  menuId    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
   menu Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)

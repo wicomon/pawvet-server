@@ -36,6 +36,26 @@ export class RoleService {
     }
   }
 
+  async findAllWithMenu(contextUser: ContextUser) {
+    try {
+      const roles = await this.prisma.role.findMany({
+        where: { isActive: true },
+        include: {
+          menus: {
+            where: { isActive: true, menu: { isActive: true } },
+            include: { menu: { select: { id: true, name: true } } },
+          },
+        },
+      });
+      return roles.map((role) => ({
+        ...role,
+        menus: role.menus.map((roleMenu) => roleMenu.menu),
+      }));
+    } catch (error) {
+      this.commonService.handleErrors(error);
+    }
+  }
+
   async findOne(id: string, select: PrismaSelect, contextUser: ContextUser) {
     try {
       const role = await this.prisma.role.findUnique({

@@ -10,6 +10,7 @@ import { UseGuards } from '@nestjs/common';
 import { ContextUser } from 'src/common/entities/ContextUser';
 import { ValidRoles } from 'src/common/enum/valid-roles.enum';
 import { AssignMenuInput } from './dto/assign-menu.input';
+import { RoleWithMenu } from './dto/role-with-menu.response';
 
 @UseGuards(JwtAuthGuard)
 @Resolver(() => Role)
@@ -22,6 +23,11 @@ export class RoleResolver {
     @CurrentUser([ValidRoles.ROOT]) user: ContextUser,
   ) {
     return this.roleService.findAll(select, user);
+  }
+
+  @Query(() => [RoleWithMenu], { name: 'roleFindAllWithMenu' })
+  findAllWithMenu(@CurrentUser([ValidRoles.ROOT]) user: ContextUser) {
+    return this.roleService.findAllWithMenu(user);
   }
 
   @Query(() => Role, { name: 'roleFindOne' })

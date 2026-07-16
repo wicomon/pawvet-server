@@ -130,6 +130,7 @@ export class AuthService {
   async userById(id: string) {
     const cached = this.userCache.get(id);
     if (cached && cached.expiresAt > Date.now()) {
+      console.log(cached.value);
       return cached.value;
     }
 
@@ -157,6 +158,7 @@ export class AuthService {
             canUpdate: true,
             canDelete: true,
             menus: {
+              where:{isActive:true, menu: {isActive:true}},
               select: {
                 menu: {
                   select: {
@@ -169,6 +171,7 @@ export class AuthService {
                     order: true,
                     icon: true,
                     description: true,
+                    isActive: true,
                     subMenu: {
                       select: {
                         id: true,

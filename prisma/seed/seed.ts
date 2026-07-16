@@ -15,6 +15,9 @@ async function main() {
     },
   });
 
+  // Roles del negocio: ROOT (dueño de la plataforma), ADMIN (dueño de la
+  // veterinaria/petshop), DOCTOR (veterinario, registra pacientes/consultas),
+  // RECEPTIONIST (recepción/caja).
   const profiles = await Promise.all([
     prisma.role.upsert({
       where: { slug: 'root' },
@@ -35,12 +38,23 @@ async function main() {
       },
     }),
     prisma.role.upsert({
-      where: { slug: 'user' },
+      where: { slug: 'doctor' },
       update: {},
       create: {
-        name: 'USER',
-        description: 'User profile with limited access',
-        slug: 'user',
+        name: 'DOCTOR',
+        description: 'Veterinario: registra pacientes, citas e historias clínicas',
+        slug: 'doctor',
+        canDelete: false,
+      },
+    }),
+    prisma.role.upsert({
+      where: { slug: 'receptionist' },
+      update: {},
+      create: {
+        name: 'RECEPTIONIST',
+        description: 'Recepción/caja: agenda citas, clientes y facturación',
+        slug: 'receptionist',
+        canDelete: false,
       },
     }),
   ]);
@@ -49,12 +63,12 @@ async function main() {
   const salt = encrypter.genSaltSync();
   const encryptedPassword = encrypter.hashSync('123456', salt);
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@pawnvet.dev' },
+    where: { email: 'admin@pawcontrol.com' },
     update: {},
     create: {
       firstName: 'root',
       lastName: 'admin',
-      email: 'admin@pawnvet.dev',
+      email: 'admin@pawcontrol.com',
       organization: {
         connect: {
           slug: 'pawnvet-demo'
@@ -69,7 +83,61 @@ async function main() {
     },
   })
 
-  console.log({ profiles, adminUser })
+  // Catálogo de menús de nivel superior. El gating por rol ocurre a este
+  // nivel (RoleMenu solo admite parentId: null); los hijos heredarían la
+  // visibilidad del padre en una futura iteración con subMenu.
+  const menuDefs = [
+    { code: 'dashboard', name: 'Dashboard', path: '/dashboard', icon: 'layout-dashboard', order: 0 },
+    { code: 'clientes', name: 'Clientes', path: '/clientes', icon: 'users', order: 1 },
+    { code: 'pacientes', name: 'Pacientes', path: '/pacientes', icon: 'paw-print', order: 2 },
+    { code: 'citas', name: 'Citas', path: '/citas', icon: 'calendar', order: 3 },
+    { code: 'productos', name: 'Productos', path: '/productos', icon: 'package', order: 4 },
+    { code: 'facturacion', name: 'Facturación', path: '/facturacion', icon: 'receipt', order: 5 },
+    { code: 'reportes', name: 'Reportes', path: '/reportes', icon: 'bar-chart', order: 6 },
+    { code: 'usuarios', name: 'Usuarios', path: '/usuarios', icon: 'user-cog', order: 7 },
+    { code: 'roles', name: 'Roles', path: '/roles', icon: 'shield', order: 8 },
+    { code: 'menus', name: 'Menús', path: '/menus', icon: 'menu', order: 9 },
+    { code: 'organizaciones', name: 'Organizaciones', path: '/organizaciones', icon: 'building', order: 10 },
+  ];
+
+  const menus = await Promise.all(
+    menuDefs.map((menu) =>
+      prisma.menu.upsert({
+        where: { code: menu.code },
+        update: {},
+        create: menu,
+      }),
+    ),
+  );
+
+  const menuIdByCode = new Map(menus.map((m) => [m.code, m.id]));
+  const roleBySlug = new Map(profiles.map((r) => [r.slug, r]));
+
+  // Asignación rol -> menús de nivel superior visibles.
+  const roleMenuMap: Record<string, string[]> = {
+    root: menuDefs.map((m) => m.code),
+    admin: ['dashboard', 'clientes', 'pacientes', 'citas', 'productos', 'facturacion', 'reportes', 'usuarios'],
+    doctor: ['dashboard', 'pacientes', 'citas'],
+    receptionist: ['dashboard', 'clientes', 'pacientes', 'citas', 'productos', 'facturacion'],
+  };
+
+  for (const [roleSlug, menuCodes] of Object.entries(roleMenuMap)) {
+    const role = roleBySlug.get(roleSlug);
+    if (!role) continue;
+
+    for (const menuCode of menuCodes) {
+      const menuId = menuIdByCode.get(menuCode);
+      if (!menuId) continue;
+
+      await prisma.roleMenu.upsert({
+        where: { roleId_menuId: { roleId: role.id, menuId } },
+        update: {},
+        create: { roleId: role.id, menuId },
+      });
+    }
+  }
+
+  console.log({ profiles, adminUser, menus: menus.length })
 }
 
 main()

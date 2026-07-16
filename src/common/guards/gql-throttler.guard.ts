@@ -15,8 +15,12 @@ interface GqlHttpContext {
 @Injectable()
 export class GqlThrottlerGuard extends ThrottlerGuard {
   getRequestResponse(context: ExecutionContext) {
-    const gqlCtx =
-      GqlExecutionContext.create(context).getContext<GqlHttpContext>();
-    return { req: gqlCtx.req, res: gqlCtx.res };
+    if (context.getType<'graphql'>() === 'graphql') {
+      const gqlCtx =
+        GqlExecutionContext.create(context).getContext<GqlHttpContext>();
+      return { req: gqlCtx.req, res: gqlCtx.res };
+    }
+    const httpCtx = context.switchToHttp();
+    return { req: httpCtx.getRequest(), res: httpCtx.getResponse() };
   }
 }

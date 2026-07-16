@@ -137,6 +137,28 @@ type SubMenu {
   subMenu: [SubMenu]
 }
 
+type RoleMenuItem {
+  id: String!
+  name: String!
+}
+
+type RoleWithMenu {
+  id: String!
+  name: String!
+  slug: String!
+  description: String
+  canRead: Boolean!
+  canCreate: Boolean!
+  canUpdate: Boolean!
+  canDelete: Boolean!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: String
+  updatedBy: String
+  menus: [RoleMenuItem!]!
+}
+
 type Query {
   userFindAll: [User!]!
   userById(id: String!): User!
@@ -147,6 +169,7 @@ type Query {
   menuFindAll: [Menu!]!
   menuFindById(id: String!): Menu!
   roleFindAll: [Role!]!
+  roleFindAllWithMenu: [RoleWithMenu!]!
   roleFindOne(id: String!): Role!
 }
 
