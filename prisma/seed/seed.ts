@@ -137,7 +137,60 @@ async function main() {
     }
   }
 
-  console.log({ profiles, adminUser, menus: menus.length })
+  // Catálogo de planes de la plataforma. "pro" arranca desactivado: aún no
+  // hay notificaciones WhatsApp ni facturación electrónica que ofrecer.
+  const plans = await Promise.all([
+    prisma.plan.upsert({
+      where: { code: 'emprendedor' },
+      update: {},
+      create: {
+        code: 'emprendedor',
+        name: 'Emprendedor',
+        description: 'Plan base para clínicas y petshops empezando con pawnvet.',
+        price: 49.9,
+        currency: 'PEN',
+        interval: 'MONTH',
+        isActive: true,
+      },
+    }),
+    prisma.plan.upsert({
+      where: { code: 'pro' },
+      update: {},
+      create: {
+        code: 'pro',
+        name: 'Pro',
+        description: 'Incluye notificaciones por WhatsApp y facturación electrónica SUNAT.',
+        price: 99.9,
+        currency: 'PEN',
+        interval: 'MONTH',
+        whatsappNotifications: true,
+        electronicInvoicing: true,
+        isActive: false,
+      },
+    }),
+  ]);
+
+  const emprendedorPlan = plans.find((p) => p.code === 'emprendedor')!;
+
+  // Suscripción demo en periodo de prueba (14 días) para la company demo.
+  const trialDays = 14;
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
+
+  const subscription = await prisma.subscription.upsert({
+    where: { companyId: company.id },
+    update: {},
+    create: {
+      companyId: company.id,
+      planId: emprendedorPlan.id,
+      status: 'TRIALING',
+      trialEndsAt,
+      currentPeriodStart: now,
+      currentPeriodEnd: trialEndsAt,
+    },
+  });
+
+  console.log({ profiles, adminUser, menus: menus.length, plans: plans.length, subscription: subscription.id })
 }
 
 main()

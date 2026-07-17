@@ -32,6 +32,9 @@ model Company {
   invoices         Invoice[]
   invoiceItems     InvoiceItem[]
   notificationLogs NotificationLog[]
+
+  subscription         Subscription?
+  subscriptionPayments SubscriptionPayment[]
 }
 
 model User {
@@ -180,6 +183,26 @@ enum NotificationStatus {
   DELIVERED
   READ
   FAILED
+}
+
+enum PlanInterval {
+  MONTH
+  YEAR
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  EXPIRED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }
 
 // ── CRM ──────────────────────────────────────────────────
@@ -439,4 +462,101 @@ model NotificationLog {
   @@index([providerMsgId]) // resolver webhooks de estado
   @@index([companyId, appointmentId])
   @@index([companyId, petId])
+}
+
+// ── Billing de la plataforma (suscripción de la empresa, NO facturación al cliente) ──
+// Nota: no confundir con `Invoice`/`InvoiceItem` arriba, que es la venta POS de la
+// veterinaria a su propio cliente (Owner). Esto es lo que la empresa (Company) le paga
+// a pawnvet por usar la plataforma.
+
+model Plan {
+  id          String       @id @default(uuid())
+  code        String       @unique // "emprendedor" | "pro"
+  name        String
+  description String?
+  price       Decimal      @db.Decimal(12, 2)
+  currency    String       @default("PEN")
+  interval    PlanInterval @default(MONTH)
+
+  // Feature flags explícitos en vez de Json: más fácil de tipar/consultar
+  // mientras el catálogo sea chico. Migrar a Json/tabla de features si crece.
+  whatsappNotifications Boolean @default(false)
+  electronicInvoicing   Boolean @default(false)
+
+  isActive  Boolean  @default(true) // "pro" arranca en false: aún no hay qué ofrecer
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  subscriptions Subscription[]
+  payments      SubscriptionPayment[]
+}
+
+model Subscription {
+  id        String @id @default(uuid())
+  companyId String @unique // 1 empresa = 1 suscripción activa a la vez
+  planId    String
+
+  status      SubscriptionStatus @default(TRIALING)
+  trialEndsAt DateTime?
+
+  // Fuente de verdad del "hasta cuándo tiene acceso" — reemplaza a un
+  // `expiresAt` suelto en Company, que se desincronizaría del plan/pagos.
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd   DateTime
+
+  cancelAtPeriodEnd Boolean   @default(false)
+  canceledAt        DateTime?
+
+  // Cuenta cortesía / "full siempre" sin cobro (equivalente al isFree propuesto).
+  isComplimentary Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  company  Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan     Plan                  @relation(fields: [planId], references: [id], onDelete: Restrict)
+  payments SubscriptionPayment[]
+
+  @@index([status, currentPeriodEnd]) // worker: "quién vence/venció"
+}
+
+model SubscriptionPayment {
+  id             String  @id @default(uuid())
+  companyId      String
+  subscriptionId String
+  planId         String? // snapshot del plan cobrado (sobrevive si el plan cambia)
+
+  amount   Decimal       @db.Decimal(12, 2)
+  currency String        @default("PEN")
+  status   PaymentStatus @default(PENDING)
+
+  // Cobro manual/offline (Yape, transferencia, efectivo) para el MVP
+  method    String? // "yape" | "transfer" | "cash"
+  reference String? // nro. de operación / voucher
+
+  paidAt      DateTime?
+  periodStart DateTime? // periodo de suscripción que cubre este pago
+  periodEnd   DateTime?
+
+  // Fase 2: integración con pasarela (Culqi/MercadoPago). Nullable, sin uso en MVP.
+  provider          String?
+  providerPaymentId String?
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  plan         Plan?        @relation(fields: [planId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, paidAt(sort: Desc)])
+  @@index([subscriptionId])
+  @@index([status])
 }
