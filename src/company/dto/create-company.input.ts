@@ -2,7 +2,7 @@ import { InputType, Int, Field } from '@nestjs/graphql';
 import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 @InputType()
-export class CreateOrganizationInput {
+export class CreateCompanyInput {
   @Field(() => String)
   @IsString()
   name: string;

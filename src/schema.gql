@@ -2,7 +2,7 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Organization {
+type Company {
   id: String!
   name: String!
   slug: String
@@ -46,17 +46,17 @@ type User {
   firstName: String!
   lastName: String!
   isActive: Boolean!
-  organizationId: String!
+  companyId: String!
   roleId: String!
   createdAt: DateTime!
   updatedAt: DateTime!
   createdBy: String
   updatedBy: String
   role: Role!
-  organization: Organization!
+  company: Company!
 }
 
-type ContextOrganization {
+type ContextCompany {
   id: String!
   name: String!
 }
@@ -90,7 +90,7 @@ type ContextUser {
   firstName: String!
   lastName: String!
   isActive: Boolean!
-  organization: ContextOrganization!
+  company: ContextCompany!
   role: ContextRole!
   menus: [ContextMenu!]!
 }
@@ -164,8 +164,8 @@ type Query {
   userById(id: String!): User!
   authValidateToken: String!
   authUserInfo: ContextUser!
-  organizationFindAll: [Organization!]!
-  organizationFindOne(id: String!): Organization!
+  companyFindAll: [Company!]!
+  companyFindOne(id: String!): Company!
   menuFindAll: [Menu!]!
   menuFindById(id: String!): Menu!
   roleFindAll: [Role!]!
@@ -179,9 +179,9 @@ type Mutation {
   userRemove(id: String!): Boolean!
   authLogin(loginInput: LoginInput!): AuthResponse!
   authChangePassword(changePasswordInput: ChangePasswordInput!): Boolean!
-  organizationCreate(createOrganizationInput: CreateOrganizationInput!): Boolean!
-  organizationUpdate(updateOrganizationInput: UpdateOrganizationInput!): Boolean!
-  organizationRemove(id: String!): Boolean!
+  companyCreate(createCompanyInput: CreateCompanyInput!): Boolean!
+  companyUpdate(updateCompanyInput: UpdateCompanyInput!): Boolean!
+  companyRemove(id: String!): Boolean!
   menuCreate(createMenuInput: CreateMenuInput!): Boolean!
   menuUpdate(updateMenuInput: UpdateMenuInput!): Boolean!
   menuRemove(id: String!): Boolean!
@@ -196,7 +196,7 @@ input CreateUserInput {
   password: String!
   firstName: String!
   lastName: String!
-  organizationId: String!
+  companyId: String!
   roleId: String!
 }
 
@@ -205,7 +205,7 @@ input UpdateUserInput {
   password: String
   firstName: String
   lastName: String
-  organizationId: String
+  companyId: String
   roleId: String
   id: String!
 }
@@ -220,7 +220,7 @@ input ChangePasswordInput {
   newPassword: String!
 }
 
-input CreateOrganizationInput {
+input CreateCompanyInput {
   name: String!
   slug: String!
   address: String
@@ -230,7 +230,7 @@ input CreateOrganizationInput {
   website: String
 }
 
-input UpdateOrganizationInput {
+input UpdateCompanyInput {
   name: String
   slug: String
   address: String

@@ -13,7 +13,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { UserModule } from './user/user.module';
 import { CommonModule } from './common/common.module';
-import { OrganizationModule } from './organization/organization.module';
+import { CompanyModule } from './company/company.module';
 import { MenuModule } from './menu/menu.module';
 import { RoleModule } from './role/role.module';
 import { GraphQLFormattedError } from 'graphql';
@@ -79,7 +79,7 @@ import { GqlThrottlerGuard } from './common/guards/gql-throttler.guard';
     }),
     UserModule,
     CommonModule,
-    OrganizationModule,
+    CompanyModule,
     MenuModule,
     RoleModule,
     AuthModule,

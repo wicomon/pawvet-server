@@ -33,7 +33,7 @@ export class UserService {
           isActive: true,
           ...(isContextUserRoot
             ? {}
-            : { organizationId: contextUser.organization.id }),
+            : { companyId: contextUser.company.id }),
         },
         select,
       });
@@ -60,17 +60,17 @@ export class UserService {
 
   async create(createUserInput: CreateUserInput, contextUser: ContextUser) {
     try {
-      const { password, organizationId, roleId, ...userData } = createUserInput;
+      const { password, companyId, roleId, ...userData } = createUserInput;
 
-      const existsOrganization =
-        await this.prismaService.organization.findFirst({
+      const existsCompany =
+        await this.prismaService.company.findFirst({
           where: {
-            id: organizationId,
+            id: companyId,
           },
         });
 
-      if (!existsOrganization) {
-        throw new BadRequestException('No existe organización');
+      if (!existsCompany) {
+        throw new BadRequestException('No existe empresa');
       }
 
       const existsUser = await this.prismaService.user.findFirst({
@@ -110,9 +110,9 @@ export class UserService {
       const user = await this.prismaService.user.create({
         data: {
           ...userData,
-          organizationId: isContextUserRoot
-            ? organizationId
-            : contextUser.organization.id,
+          companyId: isContextUserRoot
+            ? companyId
+            : contextUser.company.id,
           roleId: roleId,
           password: encryptedPassword,
           createdBy: contextUser.id,
@@ -153,19 +153,19 @@ export class UserService {
         );
       }
 
-      if (updateUserInput.organizationId) {
-        const existsOrganization =
-          await this.prismaService.organization.findFirst({
+      if (updateUserInput.companyId) {
+        const existsCompany =
+          await this.prismaService.company.findFirst({
             where: {
-              id: updateUserInput.organizationId,
+              id: updateUserInput.companyId,
             },
           });
 
-        if (!existsOrganization) {
-          throw new BadRequestException('No existe organización');
+        if (!existsCompany) {
+          throw new BadRequestException('No existe empresa');
         }
         if (contextUser.role.slug !== ValidRoles.ROOT) {
-          delete restDto.organizationId;
+          delete restDto.companyId;
         }
       }
 

@@ -130,7 +130,7 @@ export class AuthService {
   async userById(id: string) {
     const cached = this.userCache.get(id);
     if (cached && cached.expiresAt > Date.now()) {
-      console.log(cached.value);
+      // console.log(cached.value);
       return cached.value;
     }
 
@@ -142,7 +142,7 @@ export class AuthService {
         firstName: true,
         lastName: true,
         isActive: true,
-        organization: {
+        company: {
           select: {
             id: true,
             name: true,

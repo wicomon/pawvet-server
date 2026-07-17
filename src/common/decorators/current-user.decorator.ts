@@ -19,9 +19,9 @@ export const CurrentUser = createParamDecorator(
       lastName: user.lastName,
       email: user.email,
       isActive: user.isActive,
-      organization: {
-        id: user.organization.id,
-        name: user.organization.name,
+      company: {
+        id: user.company.id,
+        name: user.company.name,
       },
       role: {
         id: user.role.id,

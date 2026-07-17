@@ -23,9 +23,100 @@ CREATE TYPE "NotificationType" AS ENUM ('APPOINTMENT_REMINDER', 'VACCINE_REMINDE
 CREATE TYPE "NotificationStatus" AS ENUM ('PENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED');
 
 -- CreateTable
+CREATE TABLE "Company" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "ruc" TEXT,
+    "website" TEXT,
+    "address" TEXT,
+    "phone" TEXT,
+    "email" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+    "updatedBy" TEXT,
+
+    CONSTRAINT "Company_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "companyId" TEXT NOT NULL,
+    "roleId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+    "updatedBy" TEXT,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Role" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "description" TEXT,
+    "canRead" BOOLEAN NOT NULL DEFAULT true,
+    "canCreate" BOOLEAN NOT NULL DEFAULT true,
+    "canUpdate" BOOLEAN NOT NULL DEFAULT true,
+    "canDelete" BOOLEAN NOT NULL DEFAULT true,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+    "updatedBy" TEXT,
+
+    CONSTRAINT "Role_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Menu" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "type" TEXT NOT NULL DEFAULT 'link',
+    "position" TEXT NOT NULL DEFAULT 'top',
+    "description" TEXT,
+    "path" TEXT NOT NULL,
+    "icon" TEXT,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "parentId" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+    "updatedBy" TEXT,
+
+    CONSTRAINT "Menu_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "RoleMenu" (
+    "id" TEXT NOT NULL,
+    "roleId" TEXT NOT NULL,
+    "menuId" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdBy" TEXT,
+    "updatedBy" TEXT,
+
+    CONSTRAINT "RoleMenu_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Owner" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
     "docType" TEXT,
@@ -45,7 +136,7 @@ CREATE TABLE "Owner" (
 -- CreateTable
 CREATE TABLE "Pet" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "ownerId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "species" "Species" NOT NULL,
@@ -70,7 +161,7 @@ CREATE TABLE "Pet" (
 -- CreateTable
 CREATE TABLE "Appointment" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "petId" TEXT NOT NULL,
     "vetId" TEXT,
     "scheduledAt" TIMESTAMP(3) NOT NULL,
@@ -89,7 +180,7 @@ CREATE TABLE "Appointment" (
 -- CreateTable
 CREATE TABLE "MedicalRecord" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "petId" TEXT NOT NULL,
     "appointmentId" TEXT,
     "vetId" TEXT,
@@ -112,7 +203,7 @@ CREATE TABLE "MedicalRecord" (
 -- CreateTable
 CREATE TABLE "Vaccine" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "petId" TEXT NOT NULL,
     "medicalRecordId" TEXT,
     "vetId" TEXT,
@@ -132,7 +223,7 @@ CREATE TABLE "Vaccine" (
 -- CreateTable
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "sku" TEXT,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -153,7 +244,7 @@ CREATE TABLE "Product" (
 -- CreateTable
 CREATE TABLE "Invoice" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "ownerId" TEXT,
     "cashierId" TEXT,
     "issuedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -180,7 +271,7 @@ CREATE TABLE "Invoice" (
 -- CreateTable
 CREATE TABLE "InvoiceItem" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "invoiceId" TEXT NOT NULL,
     "productId" TEXT,
     "description" TEXT NOT NULL,
@@ -194,7 +285,7 @@ CREATE TABLE "InvoiceItem" (
 -- CreateTable
 CREATE TABLE "NotificationLog" (
     "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
     "petId" TEXT,
     "appointmentId" TEXT,
     "channel" "NotificationChannel" NOT NULL DEFAULT 'WHATSAPP',
@@ -213,94 +304,136 @@ CREATE TABLE "NotificationLog" (
 );
 
 -- CreateIndex
-CREATE INDEX "Owner_organizationId_lastName_firstName_idx" ON "Owner"("organizationId", "lastName", "firstName");
+CREATE UNIQUE INDEX "Company_slug_key" ON "Company"("slug");
 
 -- CreateIndex
-CREATE INDEX "Owner_organizationId_phone_idx" ON "Owner"("organizationId", "phone");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Owner_organizationId_docNumber_key" ON "Owner"("organizationId", "docNumber");
+CREATE INDEX "User_companyId_idx" ON "User"("companyId");
 
 -- CreateIndex
-CREATE INDEX "Pet_organizationId_ownerId_idx" ON "Pet"("organizationId", "ownerId");
+CREATE UNIQUE INDEX "Role_name_key" ON "Role"("name");
 
 -- CreateIndex
-CREATE INDEX "Pet_organizationId_name_idx" ON "Pet"("organizationId", "name");
+CREATE UNIQUE INDEX "Role_slug_key" ON "Role"("slug");
 
 -- CreateIndex
-CREATE INDEX "Appointment_organizationId_scheduledAt_idx" ON "Appointment"("organizationId", "scheduledAt");
+CREATE UNIQUE INDEX "Menu_code_key" ON "Menu"("code");
 
 -- CreateIndex
-CREATE INDEX "Appointment_organizationId_vetId_scheduledAt_idx" ON "Appointment"("organizationId", "vetId", "scheduledAt");
+CREATE INDEX "RoleMenu_roleId_idx" ON "RoleMenu"("roleId");
 
 -- CreateIndex
-CREATE INDEX "Appointment_organizationId_petId_idx" ON "Appointment"("organizationId", "petId");
+CREATE INDEX "RoleMenu_menuId_idx" ON "RoleMenu"("menuId");
 
 -- CreateIndex
-CREATE INDEX "Appointment_organizationId_status_scheduledAt_idx" ON "Appointment"("organizationId", "status", "scheduledAt");
+CREATE UNIQUE INDEX "RoleMenu_roleId_menuId_key" ON "RoleMenu"("roleId", "menuId");
+
+-- CreateIndex
+CREATE INDEX "Owner_companyId_lastName_firstName_idx" ON "Owner"("companyId", "lastName", "firstName");
+
+-- CreateIndex
+CREATE INDEX "Owner_companyId_phone_idx" ON "Owner"("companyId", "phone");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Owner_companyId_docNumber_key" ON "Owner"("companyId", "docNumber");
+
+-- CreateIndex
+CREATE INDEX "Pet_companyId_ownerId_idx" ON "Pet"("companyId", "ownerId");
+
+-- CreateIndex
+CREATE INDEX "Pet_companyId_name_idx" ON "Pet"("companyId", "name");
+
+-- CreateIndex
+CREATE INDEX "Appointment_companyId_scheduledAt_idx" ON "Appointment"("companyId", "scheduledAt");
+
+-- CreateIndex
+CREATE INDEX "Appointment_companyId_vetId_scheduledAt_idx" ON "Appointment"("companyId", "vetId", "scheduledAt");
+
+-- CreateIndex
+CREATE INDEX "Appointment_companyId_petId_idx" ON "Appointment"("companyId", "petId");
+
+-- CreateIndex
+CREATE INDEX "Appointment_companyId_status_scheduledAt_idx" ON "Appointment"("companyId", "status", "scheduledAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MedicalRecord_appointmentId_key" ON "MedicalRecord"("appointmentId");
 
 -- CreateIndex
-CREATE INDEX "MedicalRecord_organizationId_petId_visitDate_idx" ON "MedicalRecord"("organizationId", "petId", "visitDate" DESC);
+CREATE INDEX "MedicalRecord_companyId_petId_visitDate_idx" ON "MedicalRecord"("companyId", "petId", "visitDate" DESC);
 
 -- CreateIndex
-CREATE INDEX "Vaccine_organizationId_petId_idx" ON "Vaccine"("organizationId", "petId");
+CREATE INDEX "Vaccine_companyId_petId_idx" ON "Vaccine"("companyId", "petId");
 
 -- CreateIndex
-CREATE INDEX "Vaccine_organizationId_nextDueAt_idx" ON "Vaccine"("organizationId", "nextDueAt");
+CREATE INDEX "Vaccine_companyId_nextDueAt_idx" ON "Vaccine"("companyId", "nextDueAt");
 
 -- CreateIndex
-CREATE INDEX "Product_organizationId_name_idx" ON "Product"("organizationId", "name");
+CREATE INDEX "Product_companyId_name_idx" ON "Product"("companyId", "name");
 
 -- CreateIndex
-CREATE INDEX "Product_organizationId_type_isActive_idx" ON "Product"("organizationId", "type", "isActive");
+CREATE INDEX "Product_companyId_type_isActive_idx" ON "Product"("companyId", "type", "isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_organizationId_sku_key" ON "Product"("organizationId", "sku");
+CREATE UNIQUE INDEX "Product_companyId_sku_key" ON "Product"("companyId", "sku");
 
 -- CreateIndex
-CREATE INDEX "Invoice_organizationId_issuedAt_idx" ON "Invoice"("organizationId", "issuedAt" DESC);
+CREATE INDEX "Invoice_companyId_issuedAt_idx" ON "Invoice"("companyId", "issuedAt" DESC);
 
 -- CreateIndex
-CREATE INDEX "Invoice_organizationId_ownerId_idx" ON "Invoice"("organizationId", "ownerId");
+CREATE INDEX "Invoice_companyId_ownerId_idx" ON "Invoice"("companyId", "ownerId");
 
 -- CreateIndex
-CREATE INDEX "Invoice_organizationId_status_idx" ON "Invoice"("organizationId", "status");
+CREATE INDEX "Invoice_companyId_status_idx" ON "Invoice"("companyId", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Invoice_organizationId_serie_correlativo_key" ON "Invoice"("organizationId", "serie", "correlativo");
+CREATE UNIQUE INDEX "Invoice_companyId_serie_correlativo_key" ON "Invoice"("companyId", "serie", "correlativo");
 
 -- CreateIndex
 CREATE INDEX "InvoiceItem_invoiceId_idx" ON "InvoiceItem"("invoiceId");
 
 -- CreateIndex
-CREATE INDEX "InvoiceItem_organizationId_productId_idx" ON "InvoiceItem"("organizationId", "productId");
+CREATE INDEX "InvoiceItem_companyId_productId_idx" ON "InvoiceItem"("companyId", "productId");
 
 -- CreateIndex
-CREATE INDEX "NotificationLog_organizationId_status_scheduledFor_idx" ON "NotificationLog"("organizationId", "status", "scheduledFor");
+CREATE INDEX "NotificationLog_companyId_status_scheduledFor_idx" ON "NotificationLog"("companyId", "status", "scheduledFor");
 
 -- CreateIndex
 CREATE INDEX "NotificationLog_providerMsgId_idx" ON "NotificationLog"("providerMsgId");
 
 -- CreateIndex
-CREATE INDEX "NotificationLog_organizationId_appointmentId_idx" ON "NotificationLog"("organizationId", "appointmentId");
+CREATE INDEX "NotificationLog_companyId_appointmentId_idx" ON "NotificationLog"("companyId", "appointmentId");
 
 -- CreateIndex
-CREATE INDEX "NotificationLog_organizationId_petId_idx" ON "NotificationLog"("organizationId", "petId");
+CREATE INDEX "NotificationLog_companyId_petId_idx" ON "NotificationLog"("companyId", "petId");
 
 -- AddForeignKey
-ALTER TABLE "Owner" ADD CONSTRAINT "Owner_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Pet" ADD CONSTRAINT "Pet_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Menu" ADD CONSTRAINT "Menu_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Menu"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RoleMenu" ADD CONSTRAINT "RoleMenu_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RoleMenu" ADD CONSTRAINT "RoleMenu_menuId_fkey" FOREIGN KEY ("menuId") REFERENCES "Menu"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Owner" ADD CONSTRAINT "Owner_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Pet" ADD CONSTRAINT "Pet_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Pet" ADD CONSTRAINT "Pet_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "Owner"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Appointment" ADD CONSTRAINT "Appointment_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Appointment" ADD CONSTRAINT "Appointment_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Appointment" ADD CONSTRAINT "Appointment_petId_fkey" FOREIGN KEY ("petId") REFERENCES "Pet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -309,7 +442,7 @@ ALTER TABLE "Appointment" ADD CONSTRAINT "Appointment_petId_fkey" FOREIGN KEY ("
 ALTER TABLE "Appointment" ADD CONSTRAINT "Appointment_vetId_fkey" FOREIGN KEY ("vetId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MedicalRecord" ADD CONSTRAINT "MedicalRecord_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "MedicalRecord" ADD CONSTRAINT "MedicalRecord_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MedicalRecord" ADD CONSTRAINT "MedicalRecord_petId_fkey" FOREIGN KEY ("petId") REFERENCES "Pet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -321,7 +454,7 @@ ALTER TABLE "MedicalRecord" ADD CONSTRAINT "MedicalRecord_appointmentId_fkey" FO
 ALTER TABLE "MedicalRecord" ADD CONSTRAINT "MedicalRecord_vetId_fkey" FOREIGN KEY ("vetId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Vaccine" ADD CONSTRAINT "Vaccine_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Vaccine" ADD CONSTRAINT "Vaccine_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Vaccine" ADD CONSTRAINT "Vaccine_petId_fkey" FOREIGN KEY ("petId") REFERENCES "Pet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -333,10 +466,10 @@ ALTER TABLE "Vaccine" ADD CONSTRAINT "Vaccine_medicalRecordId_fkey" FOREIGN KEY 
 ALTER TABLE "Vaccine" ADD CONSTRAINT "Vaccine_vetId_fkey" FOREIGN KEY ("vetId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Product" ADD CONSTRAINT "Product_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "Owner"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -345,7 +478,7 @@ ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_ownerId_fkey" FOREIGN KEY ("ownerI
 ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_cashierId_fkey" FOREIGN KEY ("cashierId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -354,7 +487,7 @@ ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_invoiceId_fkey" FOREIGN KE
 ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_petId_fkey" FOREIGN KEY ("petId") REFERENCES "Pet"("id") ON DELETE CASCADE ON UPDATE CASCADE;

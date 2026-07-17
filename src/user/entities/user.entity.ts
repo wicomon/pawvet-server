@@ -1,5 +1,5 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
-import { Organization } from 'src/organization/entities/organization.entity';
+import { Company } from 'src/company/entities/company.entity';
 import { Role } from 'src/role/entities/role.entity';
 
 @ObjectType()
@@ -23,7 +23,7 @@ export class User {
   isActive: boolean;
 
   @Field(() => String)
-  organizationId: string;
+  companyId: string;
 
   @Field(() => String)
   roleId: string;
@@ -43,6 +43,6 @@ export class User {
   @Field(() => Role)
   role: Role;
 
-  @Field(() => Organization)
-  organization: Organization;
+  @Field(() => Company)
+  company: Company;
 }

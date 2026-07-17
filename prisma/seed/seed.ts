@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 
 async function main() {
 
-  const organization = await prisma.organization.upsert({
+  const company = await prisma.company.upsert({
     where: { slug: 'pawnvet-demo' },
     update: {},
     create: {
@@ -69,7 +69,7 @@ async function main() {
       firstName: 'root',
       lastName: 'admin',
       email: 'admin@pawcontrol.com',
-      organization: {
+      company: {
         connect: {
           slug: 'pawnvet-demo'
         }

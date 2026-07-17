@@ -1,10 +1,10 @@
 import { IsString } from 'class-validator';
-import { CreateOrganizationInput } from './create-organization.input';
+import { CreateCompanyInput } from './create-company.input';
 import { InputType, Field, Int, PartialType } from '@nestjs/graphql';
 
 @InputType()
-export class UpdateOrganizationInput extends PartialType(
-  CreateOrganizationInput,
+export class UpdateCompanyInput extends PartialType(
+  CreateCompanyInput,
 ) {
   @Field(() => String)
   @IsString()

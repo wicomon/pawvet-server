@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Organization {
+model Company {
   id        String   @id @default(uuid())
   name      String
   slug      String   @unique
@@ -41,14 +41,14 @@ model User {
   firstName      String
   lastName       String
   isActive       Boolean  @default(true)
-  organizationId String
+  companyId String
   roleId         String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   createdBy      String?
   updatedBy      String?
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   role         Role         @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   appointments   Appointment[]   @relation("AppointmentVet")
@@ -56,7 +56,7 @@ model User {
   vaccines       Vaccine[]       @relation("VaccineVet")
   invoices       Invoice[]       @relation("InvoiceCashier")
 
-  @@index([organizationId])
+  @@index([companyId])
 }
 
 model Role {
@@ -74,7 +74,7 @@ model Role {
   createdBy   String?
   updatedBy   String?
 
-  // organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   users User[]
   menus RoleMenu[]
   // rolePermissions RolePermission[]
@@ -186,7 +186,7 @@ enum NotificationStatus {
 
 model Owner {
   id             String   @id @default(uuid())
-  organizationId String
+  companyId String
   firstName      String
   lastName       String
   docType        String? // "DNI" | "RUC" | "CE"
@@ -200,18 +200,18 @@ model Owner {
   createdBy      String?
   updatedBy      String?
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pets         Pet[]
   invoices     Invoice[]
 
-  @@unique([organizationId, docNumber])
-  @@index([organizationId, lastName, firstName])
-  @@index([organizationId, phone])
+  @@unique([companyId, docNumber])
+  @@index([companyId, lastName, firstName])
+  @@index([companyId, phone])
 }
 
 model Pet {
   id             String    @id @default(uuid())
-  organizationId String
+  companyId String
   ownerId        String
   name           String
   species        Species
@@ -231,22 +231,22 @@ model Pet {
   createdBy      String?
   updatedBy      String?
 
-  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   owner          Owner             @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   appointments   Appointment[]
   medicalRecords MedicalRecord[]
   vaccines       Vaccine[]
   notifications  NotificationLog[]
 
-  @@index([organizationId, ownerId])
-  @@index([organizationId, name])
+  @@index([companyId, ownerId])
+  @@index([companyId, name])
 }
 
 // ── Clínica ──────────────────────────────────────────────
 
 model Appointment {
   id             String            @id @default(uuid())
-  organizationId String
+  companyId String
   petId          String
   vetId          String? // User asignado (veterinario)
   scheduledAt    DateTime
@@ -259,21 +259,21 @@ model Appointment {
   createdBy      String?
   updatedBy      String?
 
-  organization  Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company  Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pet           Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
   vet           User?             @relation("AppointmentVet", fields: [vetId], references: [id], onDelete: SetNull)
   medicalRecord MedicalRecord?
   notifications NotificationLog[]
 
-  @@index([organizationId, scheduledAt]) // agenda del día/semana de la clínica
-  @@index([organizationId, vetId, scheduledAt]) // agenda por veterinario
-  @@index([organizationId, petId]) // historial de citas de la mascota
-  @@index([organizationId, status, scheduledAt]) // pendientes de recordatorio
+  @@index([companyId, scheduledAt]) // agenda del día/semana de la clínica
+  @@index([companyId, vetId, scheduledAt]) // agenda por veterinario
+  @@index([companyId, petId]) // historial de citas de la mascota
+  @@index([companyId, status, scheduledAt]) // pendientes de recordatorio
 }
 
 model MedicalRecord {
   id             String   @id @default(uuid())
-  organizationId String
+  companyId String
   petId          String
   appointmentId  String?  @unique // una cita genera a lo sumo un registro
   vetId          String?
@@ -291,18 +291,18 @@ model MedicalRecord {
   createdBy      String?
   updatedBy      String?
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pet          Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
   appointment  Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   vet          User?        @relation("MedicalRecordVet", fields: [vetId], references: [id], onDelete: SetNull)
   vaccines     Vaccine[]
 
-  @@index([organizationId, petId, visitDate(sort: Desc)])
+  @@index([companyId, petId, visitDate(sort: Desc)])
 }
 
 model Vaccine {
   id              String    @id @default(uuid())
-  organizationId  String
+  companyId  String
   petId           String
   medicalRecordId String? // opcional: aplicada dentro de una consulta
   vetId           String?
@@ -316,20 +316,20 @@ model Vaccine {
   createdBy       String?
   updatedBy       String?
 
-  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pet           Pet            @relation(fields: [petId], references: [id], onDelete: Cascade)
   medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onDelete: SetNull)
   vet           User?          @relation("VaccineVet", fields: [vetId], references: [id], onDelete: SetNull)
 
-  @@index([organizationId, petId])
-  @@index([organizationId, nextDueAt]) // "vacunas que vencen esta semana" → recordatorios
+  @@index([companyId, petId])
+  @@index([companyId, nextDueAt]) // "vacunas que vencen esta semana" → recordatorios
 }
 
 // ── Facturación e Inventario ─────────────────────────────
 
 model Product {
   id             String      @id @default(uuid())
-  organizationId String
+  companyId String
   sku            String?
   name           String
   description    String?
@@ -344,17 +344,17 @@ model Product {
   createdBy      String?
   updatedBy      String?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   invoiceItems InvoiceItem[]
 
-  @@unique([organizationId, sku])
-  @@index([organizationId, name])
-  @@index([organizationId, type, isActive])
+  @@unique([companyId, sku])
+  @@index([companyId, name])
+  @@index([companyId, type, isActive])
 }
 
 model Invoice {
   id             String        @id @default(uuid())
-  organizationId String
+  companyId String
   ownerId        String? // venta puede ser a cliente casual (null)
   cashierId      String? // User que registró la venta
   issuedAt       DateTime      @default(now())
@@ -379,22 +379,22 @@ model Invoice {
   createdBy String?
   updatedBy String?
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   owner        Owner?        @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   cashier      User?         @relation("InvoiceCashier", fields: [cashierId], references: [id], onDelete: SetNull)
   items        InvoiceItem[]
 
   // Numeración SUNAT única por tenant. En Postgres los NULL no colisionan,
   // así que las ventas del MVP (sin serie) no se bloquean entre sí.
-  @@unique([organizationId, serie, correlativo])
-  @@index([organizationId, issuedAt(sort: Desc)]) // reporte de ventas por rango
-  @@index([organizationId, ownerId])
-  @@index([organizationId, status])
+  @@unique([companyId, serie, correlativo])
+  @@index([companyId, issuedAt(sort: Desc)]) // reporte de ventas por rango
+  @@index([companyId, ownerId])
+  @@index([companyId, status])
 }
 
 model InvoiceItem {
   id             String  @id @default(uuid())
-  organizationId String // denormalizado a propósito (RLS/particionado futuro)
+  companyId String // denormalizado a propósito (RLS/particionado futuro)
   invoiceId      String
   productId      String?
   // Snapshot inmutable: si luego cambian nombre/precio del producto,
@@ -404,19 +404,19 @@ model InvoiceItem {
   unitPrice      Decimal @db.Decimal(12, 2)
   total          Decimal @db.Decimal(12, 2)
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   invoice      Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   product      Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([invoiceId])
-  @@index([organizationId, productId]) // "¿cuánto vendí de X?" sin JOIN a cabecera
+  @@index([companyId, productId]) // "¿cuánto vendí de X?" sin JOIN a cabecera
 }
 
 // ── Fase 2: Notificaciones (WhatsApp) ────────────────────
 
 model NotificationLog {
   id             String              @id @default(uuid())
-  organizationId String
+  companyId String
   petId          String? // recordatorio de vacuna
   appointmentId  String? // recordatorio de cita
   channel        NotificationChannel @default(WHATSAPP)
@@ -431,12 +431,12 @@ model NotificationLog {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pet          Pet?         @relation(fields: [petId], references: [id], onDelete: Cascade)
   appointment  Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
-  @@index([organizationId, status, scheduledFor]) // worker: "pendientes por enviar"
+  @@index([companyId, status, scheduledFor]) // worker: "pendientes por enviar"
   @@index([providerMsgId]) // resolver webhooks de estado
-  @@index([organizationId, appointmentId])
-  @@index([organizationId, petId])
+  @@index([companyId, appointmentId])
+  @@index([companyId, petId])
 }

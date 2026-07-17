@@ -22,7 +22,7 @@ export class CreateUserInput {
 
   @Field(() => String)
   @IsString()
-  organizationId: string;
+  companyId: string;
 
   @Field(() => String)
   @IsString()

@@ -1,7 +1,7 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
 
 @ObjectType()
-class ContextOrganization {
+class ContextCompany {
   @Field(() => String)
   id: string;
 
@@ -83,8 +83,8 @@ export class ContextUser {
   @Field(() => Boolean)
   isActive: boolean;
 
-  @Field(() => ContextOrganization)
-  organization: ContextOrganization;
+  @Field(() => ContextCompany)
+  company: ContextCompany;
 
   @Field(() => ContextRole)
   role: ContextRole;

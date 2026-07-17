@@ -5,14 +5,14 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateOrganizationInput } from './dto/create-organization.input';
-import { UpdateOrganizationInput } from './dto/update-organization.input';
+import { CreateCompanyInput } from './dto/create-company.input';
+import { UpdateCompanyInput } from './dto/update-company.input';
 import { PrismaService } from 'src/common/services/prisma.service';
 import { PrismaSelect } from 'src/common/types';
 import { CommonService } from 'src/common/services/common.service';
 
 @Injectable()
-export class OrganizationService {
+export class CompanyService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly commonService: CommonService,
@@ -20,7 +20,7 @@ export class OrganizationService {
 
   async findAll(select: PrismaSelect) {
     try {
-      return this.prisma.organization.findMany({
+      return this.prisma.company.findMany({
         where: {
           isActive: true,
         },
@@ -33,13 +33,13 @@ export class OrganizationService {
 
   async findOne(id: string, select: PrismaSelect) {
     try {
-      const user = await this.prisma.organization.findUnique({
+      const user = await this.prisma.company.findUnique({
         where: { id },
         select,
       });
       if (!user) {
         throw new NotFoundException(
-          'La organización que intenta consultar no existe',
+          'La empresa que intenta consultar no existe',
         );
       }
       return user;
@@ -48,20 +48,20 @@ export class OrganizationService {
     }
   }
 
-  async create(createOrganizationInput: CreateOrganizationInput) {
+  async create(createCompanyInput: CreateCompanyInput) {
     try {
-      const existsOrganization = await this.prisma.organization.findFirst({
+      const existsCompany = await this.prisma.company.findFirst({
         where: {
-          slug: createOrganizationInput.slug,
+          slug: createCompanyInput.slug,
         },
       });
 
-      if (existsOrganization) {
-        throw new ConflictException('Ya existe una organización con ese slug');
+      if (existsCompany) {
+        throw new ConflictException('Ya existe una empresa con ese slug');
       }
 
-      const newOrganization = await this.prisma.organization.create({
-        data: createOrganizationInput,
+      const newCompany = await this.prisma.company.create({
+        data: createCompanyInput,
       });
       return true;
     } catch (error) {
@@ -69,22 +69,22 @@ export class OrganizationService {
     }
   }
 
-  async update(id: string, updateOrganizationInput: UpdateOrganizationInput) {
+  async update(id: string, updateCompanyInput: UpdateCompanyInput) {
     try {
-      // console.log({updateOrganizationInput, id})
-      const organization = await this.prisma.organization.findUnique({
+      // console.log({updateCompanyInput, id})
+      const company = await this.prisma.company.findUnique({
         where: { id },
       });
 
-      if (!organization) {
+      if (!company) {
         throw new BadRequestException(
-          'La organización que intenta actualizar no existe',
+          'La empresa que intenta actualizar no existe',
         );
       }
 
-      const updatedOrganization = await this.prisma.organization.update({
+      const updatedCompany = await this.prisma.company.update({
         where: { id },
-        data: updateOrganizationInput,
+        data: updateCompanyInput,
       });
 
       return true;
@@ -95,17 +95,17 @@ export class OrganizationService {
 
   async remove(id: string) {
     try {
-      const existOrganization = await this.prisma.organization.findUnique({
+      const existCompany = await this.prisma.company.findUnique({
         where: { id },
       });
 
-      if (!existOrganization) {
+      if (!existCompany) {
         throw new NotFoundException(
-          'La organización que intenta eliminar no existe',
+          'La empresa que intenta eliminar no existe',
         );
       }
 
-      const deletedOrganization = await this.prisma.organization.update({
+      const deletedCompany = await this.prisma.company.update({
         where: { id },
         data: {
           isActive: false,
