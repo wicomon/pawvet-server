@@ -1,12 +1,42 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
 
 @ObjectType()
+class ContextPlan {
+  @Field(() => String)
+  code: string;
+
+  @Field(() => String)
+  name: string;
+}
+
+@ObjectType()
+class ContextSubscription {
+  @Field(() => String)
+  status: string;
+
+  @Field(() => Date)
+  currentPeriodEnd: Date;
+
+  @Field(() => Date, { nullable: true })
+  trialEndsAt?: Date;
+
+  @Field(() => Boolean)
+  isComplimentary: boolean;
+
+  @Field(() => ContextPlan, { nullable: true })
+  plan?: ContextPlan;
+}
+
+@ObjectType()
 class ContextCompany {
   @Field(() => String)
   id: string;
 
   @Field(() => String)
   name: string;
+
+  @Field(() => ContextSubscription, { nullable: true })
+  subscription?: ContextSubscription;
 }
 
 @ObjectType()

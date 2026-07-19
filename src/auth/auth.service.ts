@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -11,6 +12,12 @@ import { CommonService } from 'src/common/services/common.service';
 import * as encrypter from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { ChangePasswordInput } from './dto/inputs/change-password.input';
+import { ValidRoles } from 'src/common/enum/valid-roles.enum';
+
+type SubscriptionAccessCheck = {
+  currentPeriodEnd: Date;
+  isComplimentary: boolean;
+} | null;
 
 @Injectable()
 export class AuthService {
@@ -47,6 +54,32 @@ export class AuthService {
     return this.jwtService.sign({ id: userId, msg: 'generated' });
   }
 
+  // ROOT (dueño de la plataforma) siempre pasa. Cuentas cortesía
+  // (isComplimentary) siempre pasan. El resto necesita currentPeriodEnd
+  // vigente; sin fila de suscripción = sin acceso. `status` (TRIAL/FULL)
+  // no gobierna acceso, solo distingue si está en prueba o ya pagó.
+  // Solo se aplica en login (ver CLAUDE.md / plan de billing): con JWT de 4h
+  // y cobro manual, el peor caso es acceso stale hasta por 4h tras vencer.
+  private assertActiveSubscription(
+    roleSlug: string,
+    subscription: SubscriptionAccessCheck,
+  ) {
+    if (roleSlug === ValidRoles.ROOT) return;
+
+    if (!subscription)
+      throw new ForbiddenException(
+        'La empresa no tiene una suscripción activa',
+      );
+
+    if (subscription.isComplimentary) return;
+
+    if (subscription.currentPeriodEnd >= new Date()) return;
+
+    throw new ForbiddenException(
+      'La suscripción de la empresa está vencida o suspendida',
+    );
+  }
+
   async login(loginInput: LoginInput) {
     try {
       const { email, password } = loginInput;
@@ -55,6 +88,21 @@ export class AuthService {
         where: {
           email,
         },
+        select: {
+          id: true,
+          password: true,
+          role: { select: { slug: true } },
+          company: {
+            select: {
+              subscription: {
+                select: {
+                  currentPeriodEnd: true,
+                  isComplimentary: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!existsUser)
@@ -62,6 +110,11 @@ export class AuthService {
 
       if (!(await encrypter.compare(password, existsUser.password)))
         throw new BadRequestException('Email/password incorrectos');
+
+      this.assertActiveSubscription(
+        existsUser.role.slug,
+        existsUser.company.subscription,
+      );
 
       const token = this.getJwtToken(existsUser.id);
 
@@ -146,6 +199,15 @@ export class AuthService {
           select: {
             id: true,
             name: true,
+            subscription: {
+              select: {
+                status: true,
+                currentPeriodEnd: true,
+                trialEndsAt: true,
+                isComplimentary: true,
+                plan: { select: { code: true, name: true } },
+              },
+            },
           },
         },
         role: {
@@ -209,7 +271,7 @@ export class AuthService {
 
     if (!user) throw new NotFoundException('User not found');
     if (!user.isActive) throw new UnauthorizedException('User inactive');
-
+    // console.log(user)
     const formatedUser = {
       ...user,
       menus: user.role.menus

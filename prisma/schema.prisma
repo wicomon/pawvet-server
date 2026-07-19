@@ -38,21 +38,21 @@ model Company {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  password       String // Hash del password (bcrypt)
-  firstName      String
-  lastName       String
-  isActive       Boolean  @default(true)
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // Hash del password (bcrypt)
+  firstName String
+  lastName  String
+  isActive  Boolean  @default(true)
   companyId String
-  roleId         String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  createdBy      String?
-  updatedBy      String?
+  roleId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  role         Role         @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   appointments   Appointment[]   @relation("AppointmentVet")
   medicalRecords MedicalRecord[] @relation("MedicalRecordVet")
@@ -190,12 +190,12 @@ enum PlanInterval {
   YEAR
 }
 
+// Solo distingue en prueba vs pagada; el acceso real lo gobierna
+// Subscription.currentPeriodEnd (ver assertActiveSubscription en auth.service.ts),
+// no este campo.
 enum SubscriptionStatus {
-  TRIALING
-  ACTIVE
-  PAST_DUE
-  EXPIRED
-  CANCELED
+  TRIAL
+  FULL
 }
 
 enum PaymentStatus {
@@ -208,24 +208,24 @@ enum PaymentStatus {
 // ── CRM ──────────────────────────────────────────────────
 
 model Owner {
-  id             String   @id @default(uuid())
+  id        String   @id @default(uuid())
   companyId String
-  firstName      String
-  lastName       String
-  docType        String? // "DNI" | "RUC" | "CE"
-  docNumber      String?
-  phone          String? // E.164 (+51...) — destino de WhatsApp
-  email          String?
-  address        String?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  createdBy      String?
-  updatedBy      String?
+  firstName String
+  lastName  String
+  docType   String? // "DNI" | "RUC" | "CE"
+  docNumber String?
+  phone     String? // E.164 (+51...) — destino de WhatsApp
+  email     String?
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  pets         Pet[]
-  invoices     Invoice[]
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  pets     Pet[]
+  invoices Invoice[]
 
   @@unique([companyId, docNumber])
   @@index([companyId, lastName, firstName])
@@ -233,28 +233,28 @@ model Owner {
 }
 
 model Pet {
-  id             String    @id @default(uuid())
-  companyId String
-  ownerId        String
-  name           String
-  species        Species
-  breed          String?
-  sex            Sex       @default(UNKNOWN)
-  birthDate      DateTime? @db.Date
+  id         String    @id @default(uuid())
+  companyId  String
+  ownerId    String
+  name       String
+  species    Species
+  breed      String?
+  sex        Sex       @default(UNKNOWN)
+  birthDate  DateTime? @db.Date
   // REGLA ESTRICTA: siempre kilogramos, precisión al gramo. Sin conversiones.
-  weightKg       Decimal?  @db.Decimal(6, 3)
-  color          String?
-  microchip      String?
-  photoUrl       String?
-  notes          String?
-  isActive       Boolean   @default(true)
-  deceasedAt     DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  createdBy      String?
-  updatedBy      String?
+  weightKg   Decimal?  @db.Decimal(6, 3)
+  color      String?
+  microchip  String?
+  photoUrl   String?
+  notes      String?
+  isActive   Boolean   @default(true)
+  deceasedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  createdBy  String?
+  updatedBy  String?
 
-  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   owner          Owner             @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   appointments   Appointment[]
   medicalRecords MedicalRecord[]
@@ -268,21 +268,21 @@ model Pet {
 // ── Clínica ──────────────────────────────────────────────
 
 model Appointment {
-  id             String            @id @default(uuid())
-  companyId String
-  petId          String
-  vetId          String? // User asignado (veterinario)
-  scheduledAt    DateTime
-  durationMin    Int               @default(30)
-  status         AppointmentStatus @default(SCHEDULED)
-  reason         String?
-  notes          String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  createdBy      String?
-  updatedBy      String?
+  id          String            @id @default(uuid())
+  companyId   String
+  petId       String
+  vetId       String? // User asignado (veterinario)
+  scheduledAt DateTime
+  durationMin Int               @default(30)
+  status      AppointmentStatus @default(SCHEDULED)
+  reason      String?
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  createdBy   String?
+  updatedBy   String?
 
-  company  Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company       Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pet           Pet               @relation(fields: [petId], references: [id], onDelete: Cascade)
   vet           User?             @relation("AppointmentVet", fields: [vetId], references: [id], onDelete: SetNull)
   medicalRecord MedicalRecord?
@@ -295,37 +295,37 @@ model Appointment {
 }
 
 model MedicalRecord {
-  id             String   @id @default(uuid())
-  companyId String
-  petId          String
-  appointmentId  String?  @unique // una cita genera a lo sumo un registro
-  vetId          String?
-  visitDate      DateTime @default(now())
+  id            String   @id @default(uuid())
+  companyId     String
+  petId         String
+  appointmentId String?  @unique // una cita genera a lo sumo un registro
+  vetId         String?
+  visitDate     DateTime @default(now())
   // Snapshot del peso EN KG en esta visita → historial de peso
-  weightKg       Decimal? @db.Decimal(6, 3)
-  temperatureC   Decimal? @db.Decimal(4, 1)
-  anamnesis      String? // motivo/relato del dueño
-  diagnosis      String?
-  treatment      String?
-  prescription   String?
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  createdBy      String?
-  updatedBy      String?
+  weightKg      Decimal? @db.Decimal(6, 3)
+  temperatureC  Decimal? @db.Decimal(4, 1)
+  anamnesis     String? // motivo/relato del dueño
+  diagnosis     String?
+  treatment     String?
+  prescription  String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String?
+  updatedBy     String?
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  pet          Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
-  appointment  Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  vet          User?        @relation("MedicalRecordVet", fields: [vetId], references: [id], onDelete: SetNull)
-  vaccines     Vaccine[]
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  pet         Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  vet         User?        @relation("MedicalRecordVet", fields: [vetId], references: [id], onDelete: SetNull)
+  vaccines    Vaccine[]
 
   @@index([companyId, petId, visitDate(sort: Desc)])
 }
 
 model Vaccine {
   id              String    @id @default(uuid())
-  companyId  String
+  companyId       String
   petId           String
   medicalRecordId String? // opcional: aplicada dentro de una consulta
   vetId           String?
@@ -339,7 +339,7 @@ model Vaccine {
   createdBy       String?
   updatedBy       String?
 
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   pet           Pet            @relation(fields: [petId], references: [id], onDelete: Cascade)
   medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onDelete: SetNull)
   vet           User?          @relation("VaccineVet", fields: [vetId], references: [id], onDelete: SetNull)
@@ -351,23 +351,23 @@ model Vaccine {
 // ── Facturación e Inventario ─────────────────────────────
 
 model Product {
-  id             String      @id @default(uuid())
-  companyId String
-  sku            String?
-  name           String
-  description    String?
-  type           ProductType @default(PRODUCT)
-  price          Decimal     @db.Decimal(12, 2) // precio de venta
-  cost           Decimal?    @db.Decimal(12, 2) // costo (margen)
-  stock          Decimal     @default(0) @db.Decimal(10, 3) // permite fraccionar (kg de alimento)
-  trackStock     Boolean     @default(true) // false para servicios
-  isActive       Boolean     @default(true)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  createdBy      String?
-  updatedBy      String?
+  id          String      @id @default(uuid())
+  companyId   String
+  sku         String?
+  name        String
+  description String?
+  type        ProductType @default(PRODUCT)
+  price       Decimal     @db.Decimal(12, 2) // precio de venta
+  cost        Decimal?    @db.Decimal(12, 2) // costo (margen)
+  stock       Decimal     @default(0) @db.Decimal(10, 3) // permite fraccionar (kg de alimento)
+  trackStock  Boolean     @default(true) // false para servicios
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   String?
+  updatedBy   String?
 
-  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   invoiceItems InvoiceItem[]
 
   @@unique([companyId, sku])
@@ -376,18 +376,18 @@ model Product {
 }
 
 model Invoice {
-  id             String        @id @default(uuid())
+  id        String        @id @default(uuid())
   companyId String
-  ownerId        String? // venta puede ser a cliente casual (null)
-  cashierId      String? // User que registró la venta
-  issuedAt       DateTime      @default(now())
-  status         InvoiceStatus @default(ISSUED)
-  currency       String        @default("PEN")
-  subtotal       Decimal       @db.Decimal(12, 2)
-  taxAmount      Decimal       @default(0) @db.Decimal(12, 2) // IGV
-  discount       Decimal       @default(0) @db.Decimal(12, 2)
-  total          Decimal       @db.Decimal(12, 2)
-  notes          String?
+  ownerId   String? // venta puede ser a cliente casual (null)
+  cashierId String? // User que registró la venta
+  issuedAt  DateTime      @default(now())
+  status    InvoiceStatus @default(ISSUED)
+  currency  String        @default("PEN")
+  subtotal  Decimal       @db.Decimal(12, 2)
+  taxAmount Decimal       @default(0) @db.Decimal(12, 2) // IGV
+  discount  Decimal       @default(0) @db.Decimal(12, 2)
+  total     Decimal       @db.Decimal(12, 2)
+  notes     String?
 
   // Fase 2: SUNAT (facturación electrónica). Todos nullable:
   // el MVP emite "notas de venta" internas sin tocar estos campos.
@@ -402,10 +402,10 @@ model Invoice {
   createdBy String?
   updatedBy String?
 
-  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  owner        Owner?        @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  cashier      User?         @relation("InvoiceCashier", fields: [cashierId], references: [id], onDelete: SetNull)
-  items        InvoiceItem[]
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  owner   Owner?        @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  cashier User?         @relation("InvoiceCashier", fields: [cashierId], references: [id], onDelete: SetNull)
+  items   InvoiceItem[]
 
   // Numeración SUNAT única por tenant. En Postgres los NULL no colisionan,
   // así que las ventas del MVP (sin serie) no se bloquean entre sí.
@@ -416,20 +416,20 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id             String  @id @default(uuid())
-  companyId String // denormalizado a propósito (RLS/particionado futuro)
-  invoiceId      String
-  productId      String?
+  id          String  @id @default(uuid())
+  companyId   String // denormalizado a propósito (RLS/particionado futuro)
+  invoiceId   String
+  productId   String?
   // Snapshot inmutable: si luego cambian nombre/precio del producto,
   // la factura histórica no se altera.
-  description    String
-  quantity       Decimal @db.Decimal(10, 3)
-  unitPrice      Decimal @db.Decimal(12, 2)
-  total          Decimal @db.Decimal(12, 2)
+  description String
+  quantity    Decimal @db.Decimal(10, 3)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  total       Decimal @db.Decimal(12, 2)
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  invoice      Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  product      Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  company Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([invoiceId])
   @@index([companyId, productId]) // "¿cuánto vendí de X?" sin JOIN a cabecera
@@ -438,25 +438,25 @@ model InvoiceItem {
 // ── Fase 2: Notificaciones (WhatsApp) ────────────────────
 
 model NotificationLog {
-  id             String              @id @default(uuid())
-  companyId String
-  petId          String? // recordatorio de vacuna
-  appointmentId  String? // recordatorio de cita
-  channel        NotificationChannel @default(WHATSAPP)
-  type           NotificationType
-  recipient      String // teléfono E.164 o email, snapshot al momento de envío
-  payload        Json? // template + variables enviadas
-  status         NotificationStatus  @default(PENDING)
-  providerMsgId  String? // id del mensaje en la API de WhatsApp (webhooks de estado)
-  error          String?
-  scheduledFor   DateTime?
-  sentAt         DateTime?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  id            String              @id @default(uuid())
+  companyId     String
+  petId         String? // recordatorio de vacuna
+  appointmentId String? // recordatorio de cita
+  channel       NotificationChannel @default(WHATSAPP)
+  type          NotificationType
+  recipient     String // teléfono E.164 o email, snapshot al momento de envío
+  payload       Json? // template + variables enviadas
+  status        NotificationStatus  @default(PENDING)
+  providerMsgId String? // id del mensaje en la API de WhatsApp (webhooks de estado)
+  error         String?
+  scheduledFor  DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  pet          Pet?         @relation(fields: [petId], references: [id], onDelete: Cascade)
-  appointment  Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  pet         Pet?         @relation(fields: [petId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@index([companyId, status, scheduledFor]) // worker: "pendientes por enviar"
   @@index([providerMsgId]) // resolver webhooks de estado
@@ -498,13 +498,15 @@ model Subscription {
   companyId String @unique // 1 empresa = 1 suscripción activa a la vez
   planId    String
 
-  status      SubscriptionStatus @default(TRIALING)
+  status      SubscriptionStatus @default(TRIAL)
   trialEndsAt DateTime?
 
   // Fuente de verdad del "hasta cuándo tiene acceso" — reemplaza a un
   // `expiresAt` suelto en Company, que se desincronizaría del plan/pagos.
-  currentPeriodStart DateTime @default(now())
-  currentPeriodEnd   DateTime
+  // No hay currentPeriodStart: con cobro manual/apilable, "desde cuándo"
+  // no gobierna nada y solo se desincroniza; el historial de qué cubrió
+  // cada pago vive en SubscriptionPayment.periodStart/periodEnd.
+  currentPeriodEnd DateTime
 
   cancelAtPeriodEnd Boolean   @default(false)
   canceledAt        DateTime?

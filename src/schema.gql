@@ -2,6 +2,76 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Plan {
+  id: String!
+  code: String!
+  name: String!
+  description: String
+  price: Float!
+  currency: String!
+  interval: PlanInterval!
+  whatsappNotifications: Boolean!
+  electronicInvoicing: Boolean!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum PlanInterval {
+  MONTH
+  YEAR
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Subscription {
+  id: String!
+  companyId: String!
+  planId: String!
+  status: SubscriptionStatus!
+  trialEndsAt: DateTime
+  currentPeriodEnd: DateTime!
+  cancelAtPeriodEnd: Boolean!
+  canceledAt: DateTime
+  isComplimentary: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  plan: Plan
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  FULL
+}
+
+type SubscriptionPayment {
+  id: String!
+  companyId: String!
+  subscriptionId: String!
+  planId: String
+  amount: Float!
+  currency: String!
+  status: PaymentStatus!
+  method: String
+  reference: String
+  paidAt: DateTime
+  periodStart: DateTime
+  periodEnd: DateTime
+  notes: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
 type Company {
   id: String!
   name: String!
@@ -16,12 +86,9 @@ type Company {
   updatedAt: DateTime!
   createdBy: String
   updatedBy: String
+  subscription: Subscription
+  subscriptionPayments: [SubscriptionPayment!]
 }
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
 
 type Role {
   id: String!
@@ -56,9 +123,23 @@ type User {
   company: Company!
 }
 
+type ContextPlan {
+  code: String!
+  name: String!
+}
+
+type ContextSubscription {
+  status: String!
+  currentPeriodEnd: DateTime!
+  trialEndsAt: DateTime
+  isComplimentary: Boolean!
+  plan: ContextPlan
+}
+
 type ContextCompany {
   id: String!
   name: String!
+  subscription: ContextSubscription
 }
 
 type ContextMenu {
@@ -171,6 +252,10 @@ type Query {
   roleFindAll: [Role!]!
   roleFindAllWithMenu: [RoleWithMenu!]!
   roleFindOne(id: String!): Role!
+  planFindAll: [Plan!]!
+  subscriptionFindAll: [Subscription!]!
+  subscriptionFindByCompany(companyId: String): Subscription!
+  subscriptionPaymentFindAll(companyId: String): [SubscriptionPayment!]!
 }
 
 type Mutation {
@@ -179,8 +264,8 @@ type Mutation {
   userRemove(id: String!): Boolean!
   authLogin(loginInput: LoginInput!): AuthResponse!
   authChangePassword(changePasswordInput: ChangePasswordInput!): Boolean!
-  companyCreate(createCompanyInput: CreateCompanyInput!): Boolean!
-  companyUpdate(updateCompanyInput: UpdateCompanyInput!): Boolean!
+  companyCreate(createCompanyInput: CreateCompanyInput!): Company!
+  companyUpdate(updateCompanyInput: UpdateCompanyInput!): Company!
   companyRemove(id: String!): Boolean!
   menuCreate(createMenuInput: CreateMenuInput!): Boolean!
   menuUpdate(updateMenuInput: UpdateMenuInput!): Boolean!
@@ -189,6 +274,11 @@ type Mutation {
   roleUpdate(updateRoleInput: UpdateRoleInput!): Boolean!
   roleRemove(id: String!): Boolean!
   roleAssignMenus(assignMenuInput: AssignMenuInput!): Boolean!
+  planCreate(createPlanInput: CreatePlanInput!): Plan!
+  planUpdate(updatePlanInput: UpdatePlanInput!): Plan!
+  subscriptionUpsert(upsertSubscriptionInput: UpsertSubscriptionInput!): Subscription!
+  subscriptionCancel(companyId: String!): Subscription!
+  subscriptionPaymentCreate(createSubscriptionPaymentInput: CreateSubscriptionPaymentInput!): SubscriptionPayment!
 }
 
 input CreateUserInput {
@@ -228,6 +318,11 @@ input CreateCompanyInput {
   email: String
   ruc: String
   website: String
+  planId: String!
+  isComplimentary: Boolean
+  trialDays: Int
+  currentPeriodEnd: DateTime
+  status: SubscriptionStatus
 }
 
 input UpdateCompanyInput {
@@ -238,6 +333,11 @@ input UpdateCompanyInput {
   email: String
   ruc: String
   website: String
+  planId: String
+  isComplimentary: Boolean
+  trialDays: Int
+  currentPeriodEnd: DateTime
+  status: SubscriptionStatus
   id: String!
 }
 
@@ -290,4 +390,48 @@ input UpdateRoleInput {
 input AssignMenuInput {
   roleId: String!
   menuIds: [String!]!
+}
+
+input CreatePlanInput {
+  code: String!
+  name: String!
+  description: String
+  price: Float!
+  currency: String
+  interval: PlanInterval
+  whatsappNotifications: Boolean
+  electronicInvoicing: Boolean
+  isActive: Boolean
+}
+
+input UpdatePlanInput {
+  code: String
+  name: String
+  description: String
+  price: Float
+  currency: String
+  interval: PlanInterval
+  whatsappNotifications: Boolean
+  electronicInvoicing: Boolean
+  isActive: Boolean
+  id: String!
+}
+
+input UpsertSubscriptionInput {
+  companyId: String!
+  planId: String!
+  isComplimentary: Boolean
+  trialDays: Int
+  currentPeriodEnd: DateTime
+  status: SubscriptionStatus
+}
+
+input CreateSubscriptionPaymentInput {
+  companyId: String!
+  amount: Float!
+  method: String
+  reference: String
+  notes: String
+  paidAt: DateTime
+  months: Int! = 1
 }

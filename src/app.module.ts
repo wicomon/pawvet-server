@@ -19,6 +19,7 @@ import { RoleModule } from './role/role.module';
 import { GraphQLFormattedError } from 'graphql';
 import { AuthModule } from './auth/auth.module';
 import { FileModule } from './file/file.module';
+import { BillingModule } from './billing/billing.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { envValidationSchema } from './common/config/env.validation';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -84,6 +85,7 @@ import { GqlThrottlerGuard } from './common/guards/gql-throttler.guard';
     RoleModule,
     AuthModule,
     FileModule,
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [

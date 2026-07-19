@@ -9,10 +9,16 @@ import { User } from 'src/user/entities/user.entity';
 import { ContextUser } from '../../common/entities/ContextUser';
 import { ValidRoles } from '../enum/valid-roles.enum';
 
+// req.user en runtime es el objeto compuesto por AuthService.userById (no
+// coincide 1:1 con la entidad GraphQL `User`, p.ej. incluye company.subscription).
+type RequestUser = User & {
+  company: User['company'] & { subscription?: ContextUser['company']['subscription'] };
+};
+
 export const CurrentUser = createParamDecorator(
   async (roles: ValidRoles[] = [], context: ExecutionContext) => {
     const ctx = GqlExecutionContext.create(context);
-    const user: User = ctx.getContext().req.user;
+    const user: RequestUser = ctx.getContext().req.user;
     const userContext: ContextUser = {
       id: user.id,
       firstName: user.firstName,
@@ -22,6 +28,7 @@ export const CurrentUser = createParamDecorator(
       company: {
         id: user.company.id,
         name: user.company.name,
+        subscription: user.company.subscription,
       },
       role: {
         id: user.role.id,

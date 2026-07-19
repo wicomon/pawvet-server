@@ -183,9 +183,8 @@ async function main() {
     create: {
       companyId: company.id,
       planId: emprendedorPlan.id,
-      status: 'TRIALING',
+      status: 'TRIAL',
       trialEndsAt,
-      currentPeriodStart: now,
       currentPeriodEnd: trialEndsAt,
     },
   });

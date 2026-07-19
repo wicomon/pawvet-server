@@ -1,4 +1,6 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql';
+import { ObjectType, Field } from '@nestjs/graphql';
+import { Subscription } from 'src/billing/subscription/entities/subscription.entity';
+import { SubscriptionPayment } from 'src/billing/subscription/entities/subscription-payment.entity';
 
 @ObjectType()
 export class Company {
@@ -40,4 +42,10 @@ export class Company {
 
   @Field(() => String, { nullable: true })
   updatedBy?: string;
+
+  @Field(() => Subscription, { nullable: true })
+  subscription?: Subscription;
+
+  @Field(() => [SubscriptionPayment], { nullable: true })
+  subscriptionPayments?: SubscriptionPayment[];
 }

@@ -1,11 +1,16 @@
+import { UseGuards } from '@nestjs/common';
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
 import { CreateCompanyInput } from './dto/create-company.input';
 import { UpdateCompanyInput } from './dto/update-company.input';
 import { PrismaSelect } from 'src/common/types';
-import { SelectFields } from 'src/common/decorators';
+import { CurrentUser, SelectFields } from 'src/common/decorators';
+import { ContextUser } from 'src/common/entities/ContextUser';
+import { ValidRoles } from 'src/common/enum/valid-roles.enum';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Resolver(() => Company)
 export class CompanyResolver {
   constructor(private readonly companyService: CompanyService) {}
@@ -23,22 +28,28 @@ export class CompanyResolver {
     return this.companyService.findOne(id, select);
   }
 
-  @Mutation(() => Boolean, { name: 'companyCreate' })
+  // Operación de plataforma: crea la empresa junto con su suscripción
+  // (plan, días de prueba, cortesía) en una sola llamada transaccional.
+  
+  @Mutation(() => Company, { name: 'companyCreate' })
   createCompany(
     @Args('createCompanyInput')
     createCompanyInput: CreateCompanyInput,
+    @CurrentUser([ValidRoles.ROOT]) user: ContextUser,
   ) {
-    return this.companyService.create(createCompanyInput);
+    return this.companyService.create(createCompanyInput, user);
   }
 
-  @Mutation(() => Boolean, { name: 'companyUpdate' })
+  @Mutation(() => Company, { name: 'companyUpdate' })
   updateCompany(
     @Args('updateCompanyInput')
     updateCompanyInput: UpdateCompanyInput,
+    @CurrentUser([ValidRoles.ROOT]) user: ContextUser,
   ) {
     return this.companyService.update(
       updateCompanyInput.id,
       updateCompanyInput,
+      user,
     );
   }
 
