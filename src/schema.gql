@@ -264,6 +264,7 @@ type Mutation {
   userRemove(id: String!): Boolean!
   authLogin(loginInput: LoginInput!): AuthResponse!
   authChangePassword(changePasswordInput: ChangePasswordInput!): Boolean!
+  authLogout: Boolean!
   companyCreate(createCompanyInput: CreateCompanyInput!): Company!
   companyUpdate(updateCompanyInput: UpdateCompanyInput!): Company!
   companyRemove(id: String!): Boolean!

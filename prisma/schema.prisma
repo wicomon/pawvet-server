@@ -51,6 +51,13 @@ model User {
   createdBy String?
   updatedBy String?
 
+  // Sesión única activa: id de sesión emitido en cada login exitoso (viaja
+  // como `sid` en el JWT) y su expiración. Un login se bloquea si ya hay una
+  // sesión vigente; JwtStrategy.validate rechaza cualquier token cuyo `sid`
+  // no coincida con activeSessionId. Ver AuthService.login/logout.
+  activeSessionId  String?
+  sessionExpiresAt DateTime?
+
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
@@ -64,7 +71,7 @@ model User {
 
 model Role {
   id          String   @id @default(uuid())
-  name        String // Ej: "Administrador", "Docente", "Estudiante"
+  name        String // Ej: "ROOT", "ADMIN", "DOCTOR", "RECEPTIONIST"
   slug        String // Ej: "admin", "teacher", "student"
   description String?
   canRead     Boolean  @default(true)

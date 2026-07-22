@@ -13,6 +13,7 @@ import * as encrypter from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { ChangePasswordInput } from './dto/inputs/change-password.input';
 import { ValidRoles } from 'src/common/enum/valid-roles.enum';
+import { randomUUID } from 'node:crypto';
 
 type SubscriptionAccessCheck = {
   currentPeriodEnd: Date;
@@ -50,8 +51,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  private getJwtToken(userId: string) {
-    return this.jwtService.sign({ id: userId, msg: 'generated' });
+  private getJwtToken(userId: string, sessionId: string) {
+    return this.jwtService.sign({ id: userId, sid: sessionId, msg: 'generated' });
   }
 
   // ROOT (dueño de la plataforma) siempre pasa. Cuentas cortesía
@@ -91,6 +92,8 @@ export class AuthService {
         select: {
           id: true,
           password: true,
+          activeSessionId: true,
+          sessionExpiresAt: true,
           role: { select: { slug: true } },
           company: {
             select: {
@@ -116,7 +119,35 @@ export class AuthService {
         existsUser.company.subscription,
       );
 
-      const token = this.getJwtToken(existsUser.id);
+      // Sesión única: si ya hay una sesión vigente (no expirada), se bloquea
+      // el nuevo login en vez de reemplazarla. Se libera sola al vencer el
+      // JWT (sessionExpiresAt) o vía authLogout.
+      if (
+        existsUser.activeSessionId &&
+        existsUser.sessionExpiresAt &&
+        existsUser.sessionExpiresAt > new Date()
+      ) {
+        throw new ForbiddenException(
+          'Ya existe una sesión activa en otro dispositivo',
+        );
+      }
+
+      const sessionId = randomUUID();
+      const token = this.getJwtToken(existsUser.id, sessionId);
+
+      // sessionExpiresAt se deriva del propio `exp` del token firmado (no de
+      // una constante duplicada) para que JWT_EXPIRATION sea la única fuente
+      // de verdad: token y candado de sesión única quedan siempre en sync.
+      const { exp } = this.jwtService.decode(token) as { exp: number };
+
+      await this.prisma.user.update({
+        where: { id: existsUser.id },
+        data: {
+          activeSessionId: sessionId,
+          sessionExpiresAt: new Date(exp * 1000),
+        },
+      });
+      this.invalidateUserCache(existsUser.id);
 
       return {
         token,
@@ -139,8 +170,15 @@ export class AuthService {
 
   async getUserInfo(token: string) {
     try {
-      const { id } = this.jwtService.verify(token);
+      const { id, sid } = this.jwtService.verify(token);
       const user = await this.userById(id);
+
+      // Misma verificación de sesión única que JwtStrategy.validate: esta
+      // query no pasa por la estrategia (usa @CurrentToken), así que se
+      // repite el chequeo para no dejar un camino sin proteger.
+      if (!sid || (user as { activeSessionId?: string | null }).activeSessionId !== sid) {
+        throw new UnauthorizedException('Sesión inválida o cerrada');
+      }
 
       return user;
     } catch (error) {
@@ -195,6 +233,7 @@ export class AuthService {
         firstName: true,
         lastName: true,
         isActive: true,
+        activeSessionId: true,
         company: {
           select: {
             id: true,
@@ -285,5 +324,19 @@ export class AuthService {
     });
 
     return formatedUser;
+  }
+
+  async logout(userId: string) {
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { activeSessionId: null, sessionExpiresAt: null },
+      });
+      this.invalidateUserCache(userId);
+
+      return true;
+    } catch (error) {
+      this.commonService.handleErrors(error);
+    }
   }
 }

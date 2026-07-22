@@ -1,12 +1,14 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { Auth } from './entities/auth.entity';
 import { AuthResponse } from './dto/response/auth-response.dto';
 import { LoginInput } from './dto/inputs/login.input';
-import { CurrentToken } from 'src/common/decorators';
+import { CurrentToken, CurrentUser } from 'src/common/decorators';
 import { ContextUser } from 'src/common/entities/ContextUser';
 import { ChangePasswordInput } from './dto/inputs/change-password.input';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Resolver(() => Auth)
 export class AuthResolver {
@@ -34,6 +36,12 @@ export class AuthResolver {
     @Args('changePasswordInput') changePasswordInput: ChangePasswordInput,
   ) {
     return this.authService.changePassword(token, changePasswordInput);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Boolean, { name: 'authLogout' })
+  logout(@CurrentUser() user: ContextUser) {
+    return this.authService.logout(user.id);
   }
 
   // @Query(() => [Auth], { name: 'authGetUser' })
